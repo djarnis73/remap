@@ -53,6 +53,8 @@ public class MappingConfiguration<S, D> {
   static final String OMIT_FIELD_DEST = "omit in destination";
   static final String OMIT_FIELD_SOURCE = "omit in source";
 
+  private boolean allowFluentSetters;
+
   private Class<S> source;
   private Class<D> destination;
 
@@ -101,6 +103,16 @@ public class MappingConfiguration<S, D> {
     this.mappedSourceProperties = new HashSet<>();
     this.mappedDestinationProperties = new HashSet<>();
     this.mappers = new Hashtable<>();
+  }
+
+  /**
+   * @param allow if set to <code>true</code> the requirement for setters to return void is relaxed
+   *        and mapped classes can be <em>fluent</em>.
+   * @return Returns this object for method chaining.
+   */
+  public MappingConfiguration<S, D> allowFluentSetters(boolean allow) {
+    this.allowFluentSetters = allow;
+    return this;
   }
 
   /**
@@ -480,7 +492,7 @@ public class MappingConfiguration<S, D> {
    */
   private <T> Set<PropertyDescriptor> getUnmappedProperties(Class<T> type,
       Set<PropertyDescriptor> mappedSourceProperties, Target targetType) {
-    Set<PropertyDescriptor> allSourceProperties = Properties.getProperties(type, targetType);
+    Set<PropertyDescriptor> allSourceProperties = Properties.getProperties(type, targetType, allowFluentSetters);
     allSourceProperties.removeAll(mappedSourceProperties);
     return allSourceProperties;
   }
@@ -563,7 +575,7 @@ public class MappingConfiguration<S, D> {
    */
   static PropertyDescriptor getPropertyDescriptorOrFail(Target target, Class<?> type, String propertyName) {
     Optional<PropertyDescriptor> property;
-    property = Properties.getProperties(type, target)
+    property = Properties.getProperties(type, target, false)
         .stream()
         .filter(pd -> pd.getName()
             .equals(propertyName))
